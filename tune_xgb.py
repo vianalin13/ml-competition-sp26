@@ -69,25 +69,35 @@ def make_configs():
     configs.append({"name": "baseline", **BASE_CONFIG})
 
     #one param at a time experiments
-    for value in [200, 300, 500, 600]:
-        configs.append({"name": f"n_estimators_{value}", **BASE_CONFIG, "n_estimators": value})
 
+    #second run: don't need to change, no randomness
+    #for value in [200, 300, 500, 600]:
+    #    configs.append({"name": f"n_estimators_{value}", **BASE_CONFIG, "n_estimators": value})
+
+    #second run: 3 is best, done tuning this one 
     for value in [3, 4, 6, 7]:
         configs.append({"name": f"max_depth_{value}", **BASE_CONFIG, "max_depth": value})
 
-    for value in [0.03, 0.04, 0.06, 0.07]:
+    #second run: 0.03 0.04 0.05 ranked so lower is better, trying to go lower
+    #lower numbers might be from not enough trees rather than actual bad results
+    for value in [0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040]:
         configs.append({"name": f"learning_rate_{value}", **BASE_CONFIG, "learning_rate": value})
     
-    for value in [0.6, 0.7, 0.9, 1.0]:
+    #second run: 0.7 best, go smaller 0.6-0.8
+    #third run: 0.65 and 0.7 tied so i cld try the values in between 0.66-0.69 but that might j be noise so i will just keep 0.65 and 0.7 for now
+    for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
         configs.append({"name": f"subsample_{value}", **BASE_CONFIG, "subsample": value})
     
-    for value in [0.6, 0.7, 0.9, 1.0]:
+    for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
         configs.append({"name": f"colsample_bytree_{value}", **BASE_CONFIG, "colsample_bytree": value})
     
-    for value in [5, 7, 15, 20]:
+    #second run: 15 best but ranked 15 20 5 so test all around these
+    #third run" 25 was best so j gna add some extras above 25 
+    for value in [10, 20, 25, 27, 30]:
         configs.append({"name": f"min_child_weight_{value}", **BASE_CONFIG, "min_child_weight": value})
     
-    for value in [0.5, 0.8 , 2.0, 5.0]:
+    #second run: weaker run, 2.0 was good 1.0 - 5.0 
+    for value in [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
         configs.append({"name": f"reg_lambda_{value}", **BASE_CONFIG, "reg_lambda": value})
 
     return configs
@@ -121,6 +131,33 @@ def rank_ic(y_true: np.ndarray, y_pred: np.ndarray, dates: np.ndarray) -> float:
             ics.append(rho)
     return float(np.mean(ics)) if ics else float("nan")
 
+def make_rolling_splits(train_pool, n_splits=3):
+    all_dates = np.sort(train_pool["date"].unique())
+
+    split_points = np.linspace(
+        60, 
+        len(all_dates) - VAL_DAYS,
+        n_splits, 
+        dtype=int,
+    )
+
+    splits = []
+
+    for i, val_start_idx in enumerate(split_points, start=1):
+        val_end_idx = val_start_idx + VAL_DAYS
+        train_end_idx = val_start_idx - EMBARGO_DAYS - 1
+
+        train_dates = all_dates[:train_end_idx+1]
+        val_dates = all_dates[val_start_idx:val_end_idx]
+
+        train_df = train_pool[train_pool["date"].isin(train_dates)]
+        val_df = train_pool[train_pool["date"].isin(val_dates)]
+
+        splits.append((i, train_df, val_df))
+
+    return splits
+
+
 def build_param_ranking(results_df: pd.DataFrame) -> pd.DataFrame:
     param_groups = [
         "n_estimators", 
@@ -148,6 +185,7 @@ def build_param_ranking(results_df: pd.DataFrame) -> pd.DataFrame:
 
         print(f"\n=== {param} ranking ===")
         print(group_df.to_string(index=False))
+
 
         for rank, (_, row) in enumerate(group_df.iterrows(), start=1):
             summary_rows.append({
@@ -191,19 +229,24 @@ def main():
     #   [ ... train ... | embargo (discarded) | val (last VAL_DAYS) ]
     # The embargo prevents training labels (5-day forward) from reaching into
     # dates whose prices also feed the validation features.
-    all_dates = np.sort(train_pool["date"].unique())
-    if len(all_dates) < VAL_DAYS + EMBARGO_DAYS + 20:
-        raise RuntimeError("Not enough dates to train; download more history.")
+    #all_dates = np.sort(train_pool["date"].unique())
+    #if len(all_dates) < VAL_DAYS + EMBARGO_DAYS + 20:
+    #    raise RuntimeError("Not enough dates to train; download more history.")
     
-    val_start = pd.Timestamp(all_dates[-VAL_DAYS])
-    train_end = pd.Timestamp(all_dates[-(VAL_DAYS + EMBARGO_DAYS + 1)])
+    #val_start = pd.Timestamp(all_dates[-VAL_DAYS])
+    #train_end = pd.Timestamp(all_dates[-(VAL_DAYS + EMBARGO_DAYS + 1)])
 
-    train_df = train_pool[train_pool["date"] <= train_end]
-    val_df = train_pool[train_pool["date"] >= val_start]
+    #train_df = train_pool[train_pool["date"] <= train_end]
+    #val_df = train_pool[train_pool["date"] >= val_start]
 
-    print(f"   train: {len(train_df):,} rows up to {train_end.date()}")
-    print(f"   embargo: {EMBARGO_DAYS} trading days (discarded)")
-    print(f"   val:   {len(val_df):,} rows from {val_start.date()}")
+    # print(f"   train: {len(train_df):,} rows up to {train_end.date()}")
+    # print(f"   embargo: {EMBARGO_DAYS} trading days (discarded)")
+    # print(f"   val:   {len(val_df):,} rows from {val_start.date()}")
+    
+    print(">> Creating 3 splits")
+    splits = make_rolling_splits(train_pool, 3)
+    for i, train_df, val_df in splits:
+        print(f"    split {i}: train={len(train_df):,}, val={len(val_df):,}")
 
     configs = make_configs()
     results = []
@@ -212,54 +255,55 @@ def main():
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_out_path = RESULTS_DIR / f"xgb_tuning_results_{timestamp}.csv"
-    ranking_out_path = RESULTS_DIR / f"xgb_param_rankings_{timestamp}.csv"
+    #ranking_out_path = RESULTS_DIR / f"xgb_param_rankings_{timestamp}.csv"
 
-    total_start = time.time()
-    for i, config in enumerate(configs, start=1):
+    for config in configs:
         name = config["name"]
         params = {k: v for k, v in config.items() if k != "name"}
 
-        print(f"\n[{i}/{len(configs)}] {name}")
+        print(f"\n---{name}---")
+        split_ics = []
+
         start_time = time.time()
 
-        model = train_model(train_df, val_df, params)
+        for split_id, train_df, val_df in splits:
+            model = train_model(train_df, val_df, params)
 
-        val_pred = model.predict(val_df[FEATURE_COLUMNS])
-        ic = rank_ic(
-            val_df[TARGET_COLUMN].to_numpy(),
-            val_pred,
-            val_df["date"].to_numpy()
-        )
+            val_pred = model.predict(val_df[FEATURE_COLUMNS])
+            ic = rank_ic(
+                val_df[TARGET_COLUMN].to_numpy(),
+                val_pred,
+                val_df["date"].to_numpy()
+            )
+            split_ics.append(ic)
 
+        avg_ic = np.mean(split_ics)
+        std_ic = np.std(split_ics)
         elapsed = time.time() - start_time
 
-        print(f" IC: {ic:.4f}  time: {elapsed:.1f}s")
+        print(f"IC avg: {avg_ic:.4f} | std: {std_ic:.4f} | splits: {[round(x,4) for x in split_ics]}")
 
         results.append({
             "name": name,
-            "ic": ic,
+            "ic": avg_ic,
+            "ic_std": std_ic,
+            "split1_ic": split_ics[0],
+            "split2_ic": split_ics[1],
+            "split3_ic": split_ics[2],
             "elapsed_time": elapsed,
             **params,
         })
-
-        results_df = pd.DataFrame(results).sort_values("ic", ascending=False)
-        results_df.to_csv(raw_out_path, index=False)
-        
+        pd.DataFrame(results).sort_values("ic", ascending=False).to_csv(raw_out_path, index=False)
 
     
     print("\n=== Final Results ===")
-    results_df = pd.DataFrame(results).sort_values("ic", ascending=False)
-    print(results_df)
+    df = pd.DataFrame(results).sort_values("ic", ascending=False)
+    print(df.to_string(index=False))
 
-    print("\n=== Best values by parameter group ===")
-    ranking_df = build_param_ranking(results_df)
-    ranking_df.to_csv(ranking_out_path, index=False)
+    print(f"\nSaved to {raw_out_path}")
 
-    print(f"Saved results to {raw_out_path}")
-    print(f"Saved parameter rankings to {ranking_out_path}")
 
-    total_time = time.time() - total_start
-    print(f"\n>> Total runtime: {total_time/60:.2f} minutes ({total_time:.1f}s)")
+    
 
 if __name__ == "__main__":
     main()
