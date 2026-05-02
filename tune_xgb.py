@@ -47,7 +47,7 @@ DATA_DIR = Path(__file__).parent / "data"
 RESULTS_DIR = Path(__file__).parent / "experiments"
 
 VAL_DAYS = 10               # number of trading days in the validation window
-EMBARGO_DAYS = 5            # gap between train end and val start (>= FORWARD_HORIZON
+EMBARGO_DAYS = 6            # gap between train end and val start (>= FORWARD_HORIZON
                             # so training targets don't reach into val dates)
 
 
@@ -69,36 +69,254 @@ def make_configs():
     configs.append({"name": "baseline", **BASE_CONFIG})
 
     #one param at a time experiments
-
     #second run: don't need to change, no randomness
     #for value in [200, 300, 500, 600]:
     #    configs.append({"name": f"n_estimators_{value}", **BASE_CONFIG, "n_estimators": value})
 
     #second run: 3 is best, done tuning this one 
-    for value in [3, 4, 6, 7]:
-        configs.append({"name": f"max_depth_{value}", **BASE_CONFIG, "max_depth": value})
+    # for value in [3, 4, 6, 7]:
+    #     configs.append({"name": f"max_depth_{value}", **BASE_CONFIG, "max_depth": value})
 
-    #second run: 0.03 0.04 0.05 ranked so lower is better, trying to go lower
-    #lower numbers might be from not enough trees rather than actual bad results
-    for value in [0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040]:
-        configs.append({"name": f"learning_rate_{value}", **BASE_CONFIG, "learning_rate": value})
+    # #second run: 0.03 0.04 0.05 ranked so lower is better, trying to go lower
+    # #lower numbers might be from not enough trees rather than actual bad results
+    # for value in [0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040]:
+    #     configs.append({"name": f"learning_rate_{value}", **BASE_CONFIG, "learning_rate": value})
     
-    #second run: 0.7 best, go smaller 0.6-0.8
-    #third run: 0.65 and 0.7 tied so i cld try the values in between 0.66-0.69 but that might j be noise so i will just keep 0.65 and 0.7 for now
-    for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
-        configs.append({"name": f"subsample_{value}", **BASE_CONFIG, "subsample": value})
+    # #second run: 0.7 best, go smaller 0.6-0.8
+    # #third run: 0.65 and 0.7 tied so i cld try the values in between 0.66-0.69 but that might j be noise so i will just keep 0.65 and 0.7 for now
+    # for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
+    #     configs.append({"name": f"subsample_{value}", **BASE_CONFIG, "subsample": value})
     
-    for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
-        configs.append({"name": f"colsample_bytree_{value}", **BASE_CONFIG, "colsample_bytree": value})
+    # for value in [0.60, 0.65, 0.70, 0.75, 0.80]:
+    #     configs.append({"name": f"colsample_bytree_{value}", **BASE_CONFIG, "colsample_bytree": value})
     
-    #second run: 15 best but ranked 15 20 5 so test all around these
-    #third run" 25 was best so j gna add some extras above 25 
-    for value in [10, 20, 25, 27, 30]:
-        configs.append({"name": f"min_child_weight_{value}", **BASE_CONFIG, "min_child_weight": value})
+    # #second run: 15 best but ranked 15 20 5 so test all around these
+    # #third run" 25 was best so j gna add some extras above 25 
+    # for value in [10, 20, 25, 27, 30]:
+    #     configs.append({"name": f"min_child_weight_{value}", **BASE_CONFIG, "min_child_weight": value})
     
-    #second run: weaker run, 2.0 was good 1.0 - 5.0 
-    for value in [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
-        configs.append({"name": f"reg_lambda_{value}", **BASE_CONFIG, "reg_lambda": value})
+    # #second run: weaker run, 2.0 was good 1.0 - 5.0 
+    # for value in [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
+    #     configs.append({"name": f"reg_lambda_{value}", **BASE_CONFIG, "reg_lambda": value})
+
+    # combo experiments - best individual params combined
+    combo_configs = [
+        {
+            "name": "combo_ic_focused",
+            "n_estimators": 400,
+            "max_depth": 4,           # 0.116340, good IC with lower std than 3
+            "learning_rate": 0.02,    # best IC + lowest std
+            "subsample": 0.7,
+            "colsample_bytree": 0.65, # same as 0.7 but faster
+            "min_child_weight": 10,   # baseline
+            "reg_lambda": 1.0,        # baseline
+        },
+        {
+            "name": "combo_stable_focused",
+            "n_estimators": 400,
+            "max_depth": 5,           # 0.110256, most stable overall
+            "learning_rate": 0.02,    # best IC + lowest std
+            "subsample": 0.7,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 20,   # most stable (std 0.044817)
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "combo_balanced",
+            "n_estimators": 400,
+            "max_depth": 4,
+            "learning_rate": 0.02,
+            "subsample": 0.7,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 20,   # try stable MCW with IC-focused depth
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "combo_high_lr",
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.03,    # next best after 0.02
+            "subsample": 0.7,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 20,
+            "reg_lambda": 1.0,
+        },
+        # === Tier 1: All top 3 individual winners combined ===
+        {
+            "name": "combo_all_winners",
+            "n_estimators": 400,
+            "max_depth": 5,           # baseline, preserve stability
+            "learning_rate": 0.02,    # best IC + lowest std
+            "subsample": 0.7,         # better than 0.8
+            "colsample_bytree": 0.65, # tied best IC, faster than 0.7
+            "min_child_weight": 10,   # baseline
+            "reg_lambda": 1.0,        # baseline
+        },
+        
+        # === Tier 2: Colsample + LR interactions (top 2 performers) ===
+        {
+            "name": "combo_colsample_lr_deep",
+            "n_estimators": 400,
+            "max_depth": 3,           # test if high colsample needs shallower
+            "learning_rate": 0.02,
+            "subsample": 0.8,         # keep baseline
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "combo_colsample_lr_deeper",
+            "n_estimators": 400,
+            "max_depth": 6,           # test if high colsample needs deeper
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        
+        # === Tier 3: Test if high colsample needs high subsample ===
+        {
+            "name": "combo_high_sampling",  # hypothesis: more data = more colsample benefit
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.02,
+            "subsample": 0.75,        # higher than 0.7
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "combo_high_subsample_aggressive",
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.02,
+            "subsample": 0.8,         # back to baseline, but test with colsample
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        
+        # === Tier 4: Stabilization - lower reg_lambda had lower std ===
+        {
+            "name": "combo_stable_lr",
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.02,
+            "subsample": 0.7,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 2.0,        # lower std configs used 2.0-2.5
+        },
+        
+        # === Tier 5: Aggressive - colsample 0.7 (not 0.65) ===
+        {
+            "name": "combo_max_colsample",
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.02,
+            "subsample": 0.7,
+            "colsample_bytree": 0.7,  # tied best IC, no speed penalty if already run
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        
+        # === Tier 6: Test lower LR with colsample ===
+        {
+            "name": "combo_lower_lr",
+            "n_estimators": 400,
+            "max_depth": 5,
+            "learning_rate": 0.01,    # next tier down from 0.02
+            "subsample": 0.7,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        
+        # === Final tuning round: locked subsample 0.8, colsample 0.65, lr 0.02 ===
+        # Test max_depth finer range
+        {
+            "name": "final_depth_2",
+            "n_estimators": 400,
+            "max_depth": 2,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "final_depth_4",
+            "n_estimators": 400,
+            "max_depth": 4,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+        
+        # Test min_child_weight
+        {
+            "name": "final_mcw_5",
+            "n_estimators": 400,
+            "max_depth": 3,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 5,
+            "reg_lambda": 1.0,
+        },
+        {
+            "name": "final_mcw_15",
+            "n_estimators": 400,
+            "max_depth": 3,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 15,
+            "reg_lambda": 1.0,
+        },
+        
+        # Test reg_lambda
+        {
+            "name": "final_reg_0.5",
+            "n_estimators": 400,
+            "max_depth": 3,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 0.5,
+        },
+        {
+            "name": "final_reg_1.5",
+            "n_estimators": 400,
+            "max_depth": 3,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.5,
+        },
+        
+        # Best combo from depth tests (guessing depth 3 is better)
+        {
+            "name": "final_locked_depth3",
+            "n_estimators": 400,
+            "max_depth": 3,
+            "learning_rate": 0.02,
+            "subsample": 0.8,
+            "colsample_bytree": 0.65,
+            "min_child_weight": 10,
+            "reg_lambda": 1.0,
+        },
+
+        
+    ]
+    
+    for combo in combo_configs:
+        configs.append(combo)
 
     return configs
 
@@ -251,7 +469,7 @@ def main():
     configs = make_configs()
     results = []
 
-    print(f"\n>> Running {len(configs)} XGBoost configs experiments")
+    print(f"\n>> Running {len(configs)} COMBO experiments (EMBARGO_DAYS={EMBARGO_DAYS})")
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_out_path = RESULTS_DIR / f"xgb_tuning_results_{timestamp}.csv"
@@ -298,9 +516,11 @@ def main():
     
     print("\n=== Final Results ===")
     df = pd.DataFrame(results).sort_values("ic", ascending=False)
-    print(df.to_string(index=False))
+    print(df[["name", "ic", "ic_std", "split1_ic", "split2_ic", "split3_ic", "elapsed_time"]].to_string(index=False))
 
     print(f"\nSaved to {raw_out_path}")
+
+
 
 
     
