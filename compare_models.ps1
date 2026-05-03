@@ -10,7 +10,8 @@ $tests = @(
     @{ AsOf="20260126"; Start="20260127"; End="20260130" },
     @{ AsOf="20260202"; Start="20260203"; End="20260206" },
     @{ AsOf="20260309"; Start="20260310"; End="20260313" },
-    @{ AsOf="20260417"; Start="20260420"; End="20260424" }
+    @{ AsOf="20260410"; Start="20260413"; End="20260417" },
+    @{ AsOf="20260421"; Start="20260422"; End="20260430" }
 )
 
 New-Item -ItemType Directory -Force submissions | Out-Null

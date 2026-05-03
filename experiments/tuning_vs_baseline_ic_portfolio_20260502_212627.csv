@@ -1,0 +1,2 @@
+"as_of","score_start","score_end","baseline_ic","tuned_ic","ic_diff","ic_winner","baseline_portfolio_return_pct","baseline_benchmark_return_pct","baseline_excess_return_pct","tuned_portfolio_return_pct","tuned_benchmark_return_pct","tuned_excess_return_pct","excess_diff_pct","portfolio_winner"
+"20260421","20260422","20260430","0.2011","0.193","-0.0081","BASELINE","4.151","0.957","3.193","0.839","0.957","-0.118","-3.311","BASELINE"

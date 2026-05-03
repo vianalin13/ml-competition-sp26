@@ -14,8 +14,40 @@ import numpy as np
 import pandas as pd
 
 # columns used downstream by the baseline
+
+# momentum features - capture trend
+# ret_1d, ret_5d -> fast signals, 20d, 60d -> slower
+# stocks that went up recently often keep going up, but not always, so we want multiple horizons
+
+# volatility features - measure how noisy the stock is
+# high vol -> risky/unstable, low vol -> stable, but also less likely to have big gains
+# momentum works better on low value stocks 
+
+# volume features - measure trading activity
+# volume_z_20d = (volume - mean) / std, turnover_ma_20d = 20-day moving average of turnover
+# high volume spike = attention/news/liquidity
+# breakout + high volume = strong signal
+
+# mean reversion features - capture tendency to revert to mean
+# close_over_ma20, close_over_ma60 = how far above/below the 20/60-day moving average (how far price is from trend)
+# price / moving average - 1
+# 0 -> above trend bullish, < 0 -> below trend bearish, but extreme values can also indicate overbought/oversold conditions
+# models can think too far above MA -> might revert or above MA with strong momentum -> might keep going up
+
+# RSI - momentum osillator that measures speed and change of price movements
+# rsi_14 = 100 - 100 / (1 + RS), where RS = average gain over 14 days / average loss over 14 days
+# measures overbought/oversold conditions, typically 70+ = overbought (potentially bearish), 30- = oversold (potentially bullish)
+# used for mean reversion strategies, but can also indicate strong momentum if RSI is rising and above 50
+
+# cross sectional ranks 
+# ret_5d_ranlk, ret_20d_rank, vol_20d_rank = daily cross-sectional rank of ret_5d, ret_20d, vol_20d
+# instead of raw values, rank stocks against each other per day, captures relative strength/volatility
+# rank 0 = lowest value (most negative return or lowest volatility), rank 1 = highest value (most positive return or highest volatility)
+
+# target_5d - what we're trying to predict - the 5-day forward return on the forward-adjusted close
+
 FEATURE_COLUMNS = [
-    "ret_1d", "ret_5d", "ret_10d", "ret_20d", "ret_60d",
+    "ret_1d", "ret_5d", "ret_10d", "ret_20d", "ret_60d", 
     "vol_20d", "volume_z_20d", "turnover_ma_20d",
     "close_over_ma20", "close_over_ma60", "rsi_14",
     "ret_5d_rank", "ret_20d_rank", "vol_20d_rank",
