@@ -567,3 +567,82 @@ IC tuned wins: 6 / 12
 Portfolio tuned wins: 9 / 12eprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silenc
 
 
+
+adding feature rank
+(.venv) PS C:\Users\Viana Lin\OneDrive\Documents\GitHub\ml-competition-sp26> ./compare_models.ps1                                                  
+=== IC + PORTFOLIO BACKTEST COMPARISON ===
+
+Testing date: 20250613 | portfolio window: 20250616 to 20250619
+  IC: Baseline 0.0536 | Tuned 0.0523 | Diff -0.0013 BASELINE
+  Portfolio excess: Baseline +1.184% | Tuned +1.845% | Diff +0.661% TUNED
+
+Testing date: 20250630 | portfolio window: 20250701 to 20250704
+  IC: Baseline 0.0612 | Tuned 0.0591 | Diff -0.0021 BASELINE
+  Portfolio excess: Baseline +2.594% | Tuned +1.874% | Diff -0.720% BASELINE
+
+Testing date: 20250728 | portfolio window: 20250729 to 20250801
+  IC: Baseline -0.0214 | Tuned 0.0502 | Diff +0.0716 TUNED
+  Portfolio excess: Baseline -0.633% | Tuned +1.265% | Diff +1.898% TUNED
+
+Testing date: 20250818 | portfolio window: 20250819 to 20250822
+  IC: Baseline 0.0938 | Tuned 0.0891 | Diff -0.0047 BASELINE
+  Portfolio excess: Baseline -1.119% | Tuned +0.035% | Diff +1.154% TUNED
+
+Testing date: 20250922 | portfolio window: 20250923 to 20250926
+  IC: Baseline 0.1392 | Tuned 0.1462 | Diff +0.0070 TUNED
+  Portfolio excess: Baseline -1.395% | Tuned -1.891% | Diff -0.496% BASELINE
+
+Testing date: 20251010 | portfolio window: 20251013 to 20251017
+  IC: Baseline 0.0855 | Tuned 0.0883 | Diff +0.0028 TUNED
+  Portfolio excess: Baseline -2.721% | Tuned -2.442% | Diff +0.279% TUNED
+
+Testing date: 20251111 | portfolio window: 20251112 to 20251118
+  IC: Baseline 0.0217 | Tuned -0.0109 | Diff -0.0326 BASELINE
+  Portfolio excess: Baseline +0.773% | Tuned +0.162% | Diff -0.611% BASELINE
+
+Testing date: 20251218 | portfolio window: 20251219 to 20251224
+  IC: Baseline 0.0219 | Tuned 0.0037 | Diff -0.0182 BASELINE
+  Portfolio excess: Baseline +0.927% | Tuned +0.028% | Diff -0.899% BASELINE
+
+Testing date: 20260126 | portfolio window: 20260127 to 20260130
+  IC: Baseline 0.0573 | Tuned 0.0257 | Diff -0.0316 BASELINE
+  Portfolio excess: Baseline -1.516% | Tuned -1.019% | Diff +0.497% TUNED
+
+Testing date: 20260202 | portfolio window: 20260203 to 20260206
+  IC: Baseline -0.0266 | Tuned -0.0540 | Diff -0.0274 BASELINE
+  Portfolio excess: Baseline +1.760% | Tuned -0.224% | Diff -1.984% BASELINE
+
+Testing date: 20260309 | portfolio window: 20260310 to 20260313
+  IC: Baseline 0.0667 | Tuned 0.0705 | Diff +0.0038 TUNED
+  Portfolio excess: Baseline -1.169% | Tuned -0.985% | Diff +0.184% TUNED
+
+Testing date: 20260410 | portfolio window: 20260413 to 20260417
+  IC: Baseline 0.0478 | Tuned 0.0540 | Diff +0.0062 TUNED
+  Portfolio excess: Baseline +2.172% | Tuned +2.137% | Diff -0.035% BASELINE
+
+Testing date: 20260421 | portfolio window: 20260422 to 20260430
+  IC: Baseline 0.1882 | Tuned 0.2052 | Diff +0.0170 TUNED
+  Portfolio excess: Baseline +1.671% | Tuned +1.297% | Diff -0.374% BASELINE
+
+=== SUMMARY ===
+
+as_of    score_start score_end baseline_ic tuned_ic             ic_diff ic_winner baseline_
+                                                                                  portfolio
+                                                                                  _return_p
+                                                                                         ct
+-----    ----------- --------- ----------- --------             ------- --------- ---------
+20250613 20250616    20250619       0.0536   0.0523             -0.0013 BASELINE       0.08
+20250630 20250701    20250704       0.0612   0.0591             -0.0021 BASELINE      2.527
+20250728 20250729    20250801      -0.0214   0.0502              0.0716 TUNED        -2.376
+20250818 20250819    20250822       0.0938   0.0891             -0.0047 BASELINE        1.2
+20250922 20250923    20250926       0.1392   0.1462 0.00700000000000001 TUNED        -1.177
+20251010 20251013    20251017       0.0855   0.0883              0.0028 TUNED        -7.886
+20251111 20251112    20251118       0.0217  -0.0109             -0.0326 BASELINE     -1.155
+20251218 20251219    20251224       0.0219   0.0037             -0.0182 BASELINE      4.464
+20260126 20260127    20260130       0.0573   0.0257             -0.0316 BASELINE     -3.117
+20260202 20260203    20260206      -0.0266   -0.054             -0.0274 BASELINE      3.121
+20260309 20260310    20260313       0.0667   0.0705              0.0038 TUNED        -1.649
+20260410 20260413    20260417       0.0478    0.054              0.0062 TUNED         5.244
+20260421 20260422    20260430       0.1882   0.2052               0.017 TUNED         2.628
+
+

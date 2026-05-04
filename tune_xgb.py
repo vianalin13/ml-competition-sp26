@@ -36,7 +36,7 @@ import pandas as pd
 import xgboost as xgb
 from scipy.stats import spearmanr
 
-from features import (
+from features_baseline import (
     FEATURE_COLUMNS, TARGET_COLUMN, FORWARD_HORIZON,
     build_features, training_frame, 
     #prediction_frame, 
