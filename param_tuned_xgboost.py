@@ -26,27 +26,39 @@ import pandas as pd
 import xgboost as xgb
 from scipy.stats import spearmanr
 
-from features_baseline import (
+from features_benchmark import (
+#from features_baseline import (
     FEATURE_COLUMNS, TARGET_COLUMN, FORWARD_HORIZON,
     build_features, training_frame, prediction_frame,
 )
 
 DATA_DIR = Path(__file__).parent / "data"
 VAL_DAYS = 10               # number of trading days in the validation window
-EMBARGO_DAYS = 6            # gap between train end and val start (>= FORWARD_HORIZON
+EMBARGO_DAYS = 5            # gap between train end and val start (>= FORWARD_HORIZON
                             # so training targets don't reach into val dates)
 MIN_STOCKS = 30             # rule: portfolio must hold >= 30 names
 MAX_WEIGHT = 0.10           # rule: per-stock weight cap
-DEFAULT_TOP_K = 50          # baseline picks top-50 by predicted score
+DEFAULT_TOP_K = 30 #50          # baseline picks top-50 by predicted score
 
 
 def train_model(train_df: pd.DataFrame, val_df: pd.DataFrame) -> xgb.XGBRegressor:
     model = xgb.XGBRegressor(
+        # n_estimators=400,
+        # max_depth=4,
+        # learning_rate=0.02,
+        # subsample=0.8,
+        # colsample_bytree=0.65,
+        # min_child_weight=10,
+        # reg_lambda=1.0,
+        # tree_method="hist",
+        # n_jobs=-1,
+        # early_stopping_rounds=30,
+
         n_estimators=400,
-        max_depth=4,
-        learning_rate=0.02,
+        max_depth=5,
+        learning_rate=0.05,
         subsample=0.8,
-        colsample_bytree=0.65,
+        colsample_bytree=0.8,
         min_child_weight=10,
         reg_lambda=1.0,
         tree_method="hist",

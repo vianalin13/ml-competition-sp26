@@ -1,20 +1,24 @@
 """
 Feature engineering for the CSI500 stock-selection baseline.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
+
 FEATURE_COLUMNS = [
     "ret_1d", "ret_5d", "ret_10d", "ret_20d", "ret_60d",
-    "vol_20d", "volume_z_20d", "turnover_ma_20d",
-    "close_over_ma20", "close_over_ma60", "rsi_14",
-    "ret_5d_rank", "ret_20d_rank", "vol_20d_rank",
 
-    # new intraday / overnight features
-    "intraday_ret",
-    "gap_1d",
+    "vol_20d", "volume_z_20d", "turnover_ma_20d",
+
+    "close_over_ma20", "close_over_ma60", "rsi_14",
+
+    "dist_to_high_60d",
+    "gap",
+
+    "ret_5d_rank", "ret_20d_rank", "vol_20d_rank",
 ]
 
 TARGET_COLUMN = "target_5d"
@@ -23,19 +27,13 @@ FORWARD_HORIZON = 5
 
 def _per_stock_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values("date").copy()
-
     close = df["close"]
-    open_ = df["open"]
 
     df["ret_1d"] = close.pct_change(1)
     df["ret_5d"] = close.pct_change(5)
     df["ret_10d"] = close.pct_change(10)
     df["ret_20d"] = close.pct_change(20)
     df["ret_60d"] = close.pct_change(60)
-
-    # new features
-    df["intraday_ret"] = close / open_ - 1.0
-    df["gap_1d"] = open_ / close.shift(1) - 1.0
 
     df["vol_20d"] = df["ret_1d"].rolling(20).std()
 
@@ -51,6 +49,11 @@ def _per_stock_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df["close_over_ma20"] = close / close.rolling(20).mean() - 1.0
     df["close_over_ma60"] = close / close.rolling(60).mean() - 1.0
+
+    df["dist_to_high_60d"] = close / close.rolling(60).max() - 1.0
+
+    # NEW: overnight/opening gap signal
+    df["gap"] = df["open"] / close.shift(1) - 1.0
 
     delta = close.diff()
     up = delta.clip(lower=0).rolling(14).mean()
@@ -71,7 +74,7 @@ def _cross_sectional_ranks(panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_features(prices: pd.DataFrame) -> pd.DataFrame:
-    required = {"date", "stock_code", "close", "open", "volume"}
+    required = {"date", "stock_code", "open", "close", "volume"}
     missing = required - set(prices.columns)
     if missing:
         raise ValueError(f"prices is missing required columns: {missing}")
@@ -94,7 +97,6 @@ def training_frame(panel: pd.DataFrame, min_date=None, max_date=None) -> pd.Data
 
     if min_date is not None:
         df = df[df["date"] >= pd.Timestamp(min_date)]
-
     if max_date is not None:
         df = df[df["date"] <= pd.Timestamp(max_date)]
 
@@ -107,5 +109,4 @@ def prediction_frame(panel: pd.DataFrame, as_of=None) -> pd.DataFrame:
 
     as_of = pd.Timestamp(as_of)
     df = panel[panel["date"] == as_of].dropna(subset=FEATURE_COLUMNS).copy()
-
     return df
