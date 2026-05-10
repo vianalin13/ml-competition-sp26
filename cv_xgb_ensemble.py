@@ -356,15 +356,30 @@ def evaluate_split(
     # "xgb_conservative_top75": 0.20,
     # "ridge": 0.15, # apparently ridge is performing way better than xgb
 
-    "xgb_aggressive_top30": 0.25,
-    "xgb_stable_top50": 0.20,
-    "xgb_conservative_top75": 0.20,
-    "ridge": 0.35,
+    # "xgb_aggressive_top30": 0.25,
+    # "xgb_stable_top50": 0.20,
+    # "xgb_conservative_top75": 0.20,
+    # "ridge": 0.35,
 
     # "xgb_aggressive_top30": 0.30,
     # "xgb_stable_top50": 0.15,
     # "xgb_conservative_top75": 0.15,
     # "ridge": 0.40,
+
+    # "xgb_aggressive_top30": 0.20,
+    # "xgb_conservative_top75": 0.15,
+    # "xgb_stable_top50": 0,
+    # "ridge": 0.65,
+
+    # "xgb_aggressive_top30": 0.15,
+    # "xgb_stable_top50": 0,
+    # "xgb_conservative_top75": 0.20,
+    # "ridge": 0.65,
+
+    "xgb_aggressive_top30": 0.30,
+    "xgb_stable_top50": 0.10,
+    "xgb_conservative_top75": 0.10,
+    "ridge": 0.50,
 }
 
     for name in VARIANTS:

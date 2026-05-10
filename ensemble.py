@@ -86,10 +86,10 @@ VARIANTS = {
 VARIANTS.update(RIDGE_CONFIG)
 
 ENSEMBLE_WEIGHTS = {
-    "xgb_aggressive_top30": 0.25,
-    "xgb_stable_top50": 0.20,
-    "xgb_conservative_top75": 0.20,
-    "ridge": 0.35,
+    "xgb_aggressive_top30": 0.20,
+    "xgb_stable_top50": 0,
+    "xgb_conservative_top75": 0.15,
+    "ridge": 0.65,
 }
 
 def train_model(train_df: pd.DataFrame, val_df: pd.DataFrame, config: dict):
