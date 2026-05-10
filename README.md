@@ -173,30 +173,6 @@ top_k = 30
 
 ---
 
-## 2. Stable XGBoost
-
-Balanced model intended to generalize better.
-
-Parameters:
-
-```python
-n_estimators = 600
-max_depth = 4
-learning_rate = 0.03
-subsample = 0.85
-colsample_bytree = 0.75
-min_child_weight = 15
-reg_lambda = 2.0
-```
-
-Portfolio size:
-
-```python
-top_k = 50
-```
-
----
-
 ## 3. Conservative XGBoost
 
 More regularized and diversified model.
@@ -255,10 +231,9 @@ Ensemble weights:
 
 ```python
 ENSEMBLE_WEIGHTS = {
-    "xgb_aggressive_top30": 0.25,
-    "xgb_stable_top50": 0.20,
-    "xgb_conservative_top75": 0.20,
-    "ridge": 0.35,
+    "xgb_aggressive_top30": 0.20,
+    "xgb_conservative_top75": 0.15,
+    "ridge": 0.65,
 }
 ```
 
