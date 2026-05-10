@@ -120,7 +120,7 @@ def train_model(train_df: pd.DataFrame, val_df: pd.DataFrame, config: dict):
         )
         return model
     raise ValueError(f"Unsupported model_type: {model_type}")
-
+    
 def rank_ic(y_true: np.ndarray, y_pred: np.ndarray, dates: np.ndarray) -> float:
     """Daily cross-sectional Spearman correlation, averaged over dates."""
     ics = []
@@ -132,6 +132,29 @@ def rank_ic(y_true: np.ndarray, y_pred: np.ndarray, dates: np.ndarray) -> float:
         if not np.isnan(rho):
             ics.append(rho)
     return float(np.mean(ics)) if ics else float("nan")
+
+def apply_tradeability_filter(pred_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Removes names with extreme volatility, weak liquidity, or abnormal overnight gaps. 
+    This is a conservative risk filter before rank/portfolio construction.
+    """
+    before = len(pred_df)
+
+    filtered = pred_df[
+        (pred_df["vol_20d"] < pred_df["vol_20d"].quantile(0.90)) &
+        (pred_df["turnover_ma_20d"] > pred_df["turnover_ma_20d"].quantile(0.20)) &
+        (pred_df["gap"].abs() < pred_df["gap"].abs().quantile(0.95))
+    ].copy()
+
+    if len(filtered) < 100:
+        print(
+            f"   tradeability filter too strict: kept {len(filtered)}/{before}; "
+            f"using unfiltered universe"
+        )
+        return pred_df.copy()
+
+    print(f"   tradeability filter: kept {len(filtered)}/{before} stocks")
+    return filtered
 
 def build_portfolio(scores: pd.Series, top_k: int) -> pd.Series:
     """Top-K rank-weighted long-only portfolio with 10% cap."""
@@ -290,6 +313,8 @@ def evaluate_split(
         raise RuntimeError(f"No prediction rows for as_of={as_of.date()}")
 
     pred_df["stock_code"] = pred_df["stock_code"].astype(str).str.zfill(6)
+
+    pred_df = apply_tradeability_filter(pred_df)
 
     results = []
     score_table = pd.DataFrame({"stock_code": pred_df["stock_code"]})
